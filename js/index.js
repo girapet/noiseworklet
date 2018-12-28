@@ -12,6 +12,8 @@ const addAudioWorkletModule = url => fetch(url)
       return context.audioWorklet.addModule(oUrl);
     }));
 
+const $type = document.querySelector('#type');
+
 document.querySelector('#start').addEventListener('click', async () => {
   if (!context) {
     context = new AudioContext();
@@ -22,6 +24,7 @@ document.querySelector('#start').addEventListener('click', async () => {
     noiseNode = new AudioWorkletNode(context, 'noise-processor', {
       outputChannelCount: [context.destination.channelCount]
     });
+    noiseNode.port.postMessage({ type: $type.value });
     noiseNode.connect(context.destination);
   }
 });
@@ -30,5 +33,11 @@ document.querySelector('#stop').addEventListener('click', () => {
   if (noiseNode) {
     noiseNode.disconnect(context.destination);
     noiseNode = undefined;
+  }
+});
+
+$type.addEventListener('change', () => {
+  if (noiseNode) {
+    noiseNode.port.postMessage({ type: $type.value });
   }
 });
