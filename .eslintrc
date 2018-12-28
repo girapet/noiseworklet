@@ -1,0 +1,26 @@
+{
+  "extends": "airbnb-base",
+  "env": {
+    "browser": true,
+    "es6": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2017,
+    "sourceType": "module"
+  },
+  "rules": {
+    "linebreak-style": 0,
+    "comma-dangle": ["error", {
+      "arrays": 'never',
+      "objects": 'never',
+      "imports": 'never',
+      "exports": 'never',
+      "functions": 'never',
+    }],
+    "brace-style": ["error", "stroustrup"],
+    "max-len": 0,
+    "import/extensions": 0,
+    "no-restricted-globals": 0,
+    "no-plusplus": 0
+  },
+}
