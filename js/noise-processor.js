@@ -34,14 +34,15 @@ const pinkFunction = {
       db -= 6;
     }
 
-    const gainAdjust = dbToGain(-gainToDb(sumGain)) * 8;
+    const gainAdjust = dbToGain(-gainToDb(sumGain)) * 4.6;
 
     return () => {
       let pink = 0;
+      const white = randomWhite();
 
-      for (let n = 0; n < coeff.length; n++) {
-        state[n] = coeff[n] * randomWhite() + (1 - coeff[n]) * state[n];
-        pink += state[n] * gain[n];
+      for (let i = 0; i < coeff.length; i++) {
+        state[i] = coeff[i] * white + (1 - coeff[i]) * state[i];
+        pink += state[i] * gain[i];
       }
 
       return pink * gainAdjust;
@@ -60,7 +61,7 @@ const pinkFunction = {
     const contrib = [0, 0, 0, 0, 0];
     let pink = 0;
 
-    const gainAdjust = 1 / 128;
+    const gainAdjust = 1 / 140;
 
     return () => {
       let r = randomWhite();
@@ -96,7 +97,7 @@ const pinkFunction = {
     let b5 = 0;
     let b6 = 0;
 
-    const gainAdjust = 0.05;
+    const gainAdjust = 0.04;
 
     return () => {
       const r = randomWhite();
@@ -111,7 +112,11 @@ const pinkFunction = {
 
       return pink * gainAdjust;
     };
-  }
+  },
+
+  // output white noise for use with an IIR filter; see note in index.js
+
+  createIIR: () => randomWhite
 };
 
 registerProcessor('noise-processor', class extends AudioWorkletProcessor {
@@ -138,14 +143,15 @@ registerProcessor('noise-processor', class extends AudioWorkletProcessor {
   }
 
   process(inputs, outputs) {
-    const output = outputs[0];
-
-    for (let c = 0; c < output.length; c++) {
-      const outputChannel = output[c];
+    for (let c = 0; c < outputs[0].length; c++) {
       const random = this.random[c];
 
-      for (let i = 0; i < outputChannel.length; i++) {
-        outputChannel[i] = random();
+      for (let i = 0; i < outputs[0][0].length; i++) {
+        const r = random();
+
+        for (let o = 0; o < outputs.length; o++) {
+          outputs[o][c][i] = r;
+        }
       }
     }
 
