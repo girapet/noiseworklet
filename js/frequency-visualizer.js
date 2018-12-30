@@ -1,42 +1,75 @@
 class FrequencyVisualizer {
+  // an options object with audioContext and canvasElement properties is required
+
   constructor(options) {
     this.context = options.audioContext;
     this.analyserNode = this.context.createAnalyser();
     this.analyserNode.fftSize = options.fftSize || 2048;
     this.fftData = new Float32Array(this.analyserNode.frequencyBinCount);
+    this.averaging = options.averaging || false;
 
-    this.fftSum = new Float32Array(this.analyserNode.frequencyBinCount);
-    this.fftMean = new Float32Array(this.analyserNode.frequencyBinCount);
-    this.fftCount = 0;
-    this.averaging = options.averaging;
-    this.fftSum.fill(0);
+    const canvas = options.canvasElement;
+    this.graphicWidth = parseInt(getComputedStyle(canvas).width, 10);
+    this.graphicHeight = parseInt(getComputedStyle(canvas).height, 10);
 
-    this.dbScale = options.dbScale || 1;
-    this.dbOffset = options.dbOffset || 0;
+    this.minDb = options.minDb || -this.graphicHeight;
+    this.maxDb = options.maxDb || 0;
 
-    this.graphicWidth = parseInt(getComputedStyle(options.canvasElement).width, 10);
-    this.graphicHeight = parseInt(getComputedStyle(options.canvasElement).height, 10);
+    this.dbScale = this.graphicHeight / (this.maxDb - this.minDb);
+    this.dbOffset = this.maxDb * this.dbScale;
 
-    const gc = options.canvasElement.getContext('2d');
-    gc.fillStyle = options.fillStyle || '#e0e0e0';
-    gc.strokeStyle = options.strokeStyle || '#202020';
+    const gc = canvas.getContext('2d');
+    options.canvasElement.setAttribute('width', this.graphicWidth);
+    options.canvasElement.setAttribute('height', this.graphicHeight);
+    gc.fillStyle = options.fillColor || '#e0e0e0';
+    gc.strokeStyle = options.strokeColor || '#202020';
     this.graphicContext = gc;
 
-    this.stopping = true;
-    this.draw();
+    this.stopping = false;
+    this.handlers = {
+      predraw: [],
+      postdraw: []
+    };
   }
 
-  getFrequencyAt(index) {
-    return index * this.context.sampleRate * 0.5 / this.fftData.length;
+  get averaging() {
+    return this.fftCount !== undefined;
   }
 
-  getIndexFor(frequency) {
+  set averaging(value) {
+    this.analyserNode.smoothingTimeConstant = value ? 0 : 0.8;
+    this.fftSum = value ? new Float32Array(this.analyserNode.frequencyBinCount) : undefined;
+    this.fftMean = value ? new Float32Array(this.analyserNode.frequencyBinCount) : undefined;
+    this.fftCount = value ? 0 : undefined;
+
+    if (this.fftSum) {
+      this.fftSum.fill(0);
+    }
+  }
+
+  getX(frequency) {
     return frequency * this.fftData.length * 2 / this.context.sampleRate;
+  }
+
+  getY(db) {
+    return this.dbOffset - db * this.dbScale;
+  }
+
+  getFrequency(x) {
+    return x * this.context.sampleRate * 0.5 / this.fftData.length;
+  }
+
+  getDb(y) {
+    return (y - this.dbOffset) / -this.dbScale;
   }
 
   acceptConnection(connectedNode) {
     connectedNode.connect(this.analyserNode);
     this.connectedNode = connectedNode;
+  }
+
+  addEventHandler(name, callback) {
+    this.handlers[name].push(callback);
   }
 
   draw() {
@@ -45,6 +78,7 @@ class FrequencyVisualizer {
     const gh = this.graphicHeight;
 
     gc.fillRect(0, 0, gw, gh);
+    this.fireEvent('predraw');
 
     if (this.connectedNode) {
       this.analyserNode.getFloatFrequencyData(this.fftData);
@@ -63,33 +97,20 @@ class FrequencyVisualizer {
         data = this.fftMean;
       }
 
-      for (let i = 0; i < gw; i++) {
-        if (data[i] !== Number.NEGATIVE_INFINITY) {
-          const y = -(data[i] + this.dbOffset) * this.dbScale;
+      const xMax = Math.min(gw, this.fftData.length);
 
+      for (let x = 0; x < xMax; x++) {
+        if (data[x] !== Number.NEGATIVE_INFINITY) {
+          const y = this.getY(data[x]);
           gc.beginPath();
-          gc.moveTo(i + 0.5, gh);
-          gc.lineTo(i + 0.5, y);
+          gc.moveTo(x + 0.5, gh);
+          gc.lineTo(x + 0.5, y);
           gc.stroke();
         }
       }
     }
 
-    const { strokeStyle } = gc;
-    gc.strokeStyle = '#FF0000';
-    gc.beginPath();
-    let action = 'moveTo';
-
-    for (let i = 0; i < gw; i++) {
-      const f = this.getFrequencyAt(i + 0.5);
-      const db = Math.log10(1 / f) * 10 - 32;
-      const y = -(db + this.dbOffset) * this.dbScale;
-      gc[action](i + 0.5, y);
-      action = 'lineTo';
-    }
-
-    gc.stroke();
-    gc.strokeStyle = strokeStyle;
+    this.fireEvent('postdraw');
 
     if (this.stopping) {
       this.stopping = false;
@@ -97,6 +118,10 @@ class FrequencyVisualizer {
     }
 
     requestAnimationFrame(() => this.draw());
+  }
+
+  fireEvent(name) {
+    this.handlers[name].forEach(h => h(this));
   }
 
   releaseConnection() {
@@ -110,9 +135,12 @@ class FrequencyVisualizer {
 
   stop() {
     this.stopping = true;
-    this.fftSum = new Float32Array(this.analyserNode.frequencyBinCount);
-    this.fftMean = new Float32Array(this.analyserNode.frequencyBinCount);
-    this.fftCount = 0;
+
+    if (this.averaging) {
+      this.fftSum = new Float32Array(this.analyserNode.frequencyBinCount);
+      this.fftMean = new Float32Array(this.analyserNode.frequencyBinCount);
+      this.fftCount = 0;
+    }
   }
 }
 

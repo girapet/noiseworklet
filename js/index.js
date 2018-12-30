@@ -6,6 +6,9 @@ let iirNode;
 let gainNode;
 let visualizer;
 
+const $type = document.querySelector('#type');
+const $averaging = document.querySelector('#averaging');
+
 // audioWorklet.addModule expects the URL will respond with a specific MIME type.  This may not
 // be the case in all web serving contexts.  So instead fetch the source, create a blob with the
 // necessary MIME type, and create a local URL to that blob for audioWorklet.addModule.
@@ -17,7 +20,42 @@ const addAudioWorkletModule = url => fetch(url)
       return context.audioWorklet.addModule(oUrl);
     }));
 
-const $type = document.querySelector('#type');
+// draw the ideal 1/f frequency response curve and 1000 Hz ticks
+
+const drawIdeal = (vis) => {
+  const gc = vis.graphicContext;
+  const gw = vis.graphicWidth;
+  const gh = vis.graphicHeight;
+
+  gc.save();
+  gc.strokeStyle = '#FF0000';
+  gc.lineWidth = 2;
+  gc.beginPath();
+  let action = 'moveTo';
+  const xMax = Math.min(gw, vis.fftData.length);
+
+  for (let x = 0; x <= xMax; x += 4) {
+    const f = vis.getFrequency(x + 0.5);
+    const db = Math.log10(1 / f) * 10 - 33.3;
+    const y = vis.getY(db);
+    gc[action](x + 0.5, y);
+    action = 'lineTo';
+  }
+
+  gc.stroke();
+  gc.strokeStyle = '#FFFFFF';
+  const maxFrequency = context.sampleRate * 0.5;
+
+  for (let f = 1000; f <= maxFrequency; f += 1000) {
+    const x = vis.getX(f);
+    gc.beginPath();
+    gc.moveTo(x, gh);
+    gc.lineTo(x, gh - 10);
+    gc.stroke();
+  }
+
+  gc.restore();
+};
 
 const start = async () => {
   if (noiseNode) {
@@ -45,7 +83,7 @@ const start = async () => {
     const a = [1, -2.494956002, 2.017265875, -0.522189400]; // denominator, feedback
     iirNode = context.createIIRFilter(b, a);
     gainNode = context.createGain();
-    gainNode.gain.value = 1.35;
+    gainNode.gain.value = 1.33;
     noiseNode.connect(iirNode);
     iirNode.connect(gainNode);
     outNode = gainNode;
@@ -57,10 +95,11 @@ const start = async () => {
     visualizer = new FrequencyVisualizer({
       audioContext: context,
       canvasElement: document.querySelector('#visualizer'),
-      averaging: true,
-      dbScale: 5,
-      dbOffset: 30
+      averaging: $averaging.checked,
+      minDb: -85,
+      maxDb: -35
     });
+    visualizer.addEventHandler('postdraw', drawIdeal);
   }
 
   visualizer.acceptConnection(outNode);
@@ -98,5 +137,11 @@ $type.addEventListener('change', () => {
   if (noiseNode) {
     stop();
     start();
+  }
+});
+
+$averaging.addEventListener('change', () => {
+  if (visualizer) {
+    visualizer.averaging = $averaging.checked;
   }
 });
