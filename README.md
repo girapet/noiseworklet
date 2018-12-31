@@ -10,7 +10,7 @@ The [test page](https://girapet.github.io/noiseworklet/test.html) shows the vari
 The [start page](https://girapet.github.io/noiseworklet) presents just the preferred solution, a white noise worklet with a pinking filter.  It's frequency response is close to ideal.  Since it employs a minimum of JavaScript code it should deliver the best performance.
 
 ### Useful Bits
-* The _addAudioWorkletModule_ function in [index.js](https://github.com/girapet/noiseworklet/blob/master/js/index.js) which lets you load an AudioWorkletProcessor module from a URL that does not return the necessary text/javascript MIME type.
+* The _addAudioWorkletModule_ function in [index.js](https://github.com/girapet/noiseworklet/blob/master/js/index.js) which lets you load an AudioWorkletProcessor module from a URL that does not return the necessary text/javascript MIME type.  This can be helpful when you need to debug the exception "The user aborted a request" from AudioWorklet.addModule().  It's actually no longer needed in this code (it could now load js/noise-processor.js directly) but I left it in to show it working.
 
 * The [noise-processor.js](https://github.com/girapet/noiseworklet/blob/master/js/noise-processor.js) script, a simple AudioWorkletProcessor that delivers white noise.
 
