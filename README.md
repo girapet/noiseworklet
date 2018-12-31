@@ -5,9 +5,9 @@ Pink noise generation using a white noise audio worklet and IIR filter
 This began as my first trial of AudioWorklet and AudioWorkletProcessor.  I thought, just generate some [white noise](https://en.wikipedia.org/wiki/White_noise) with a random number generator, what could be simpler?  But white noise is so harsh and unnatural.  Thus began my quest began for the best JavaScript [pink noise](https://en.wikipedia.org/wiki/Pink_noise) generator.
 
 ### Pages
-The test page shows the various pure JavaScript algorithms I tried plus white noise pushed through an IIR pinking filter.  You can switch between those algorithms and see their frequency responses plotted against an ideal 1/f curve.  They all sound pretty much the same, though you may be able to hear subtle differences between them.  See the code for the test page and worklet for details.  
+The [test page](https://girapet.github.io/noiseworklet/test.html) shows the various pure JavaScript algorithms I tried plus white noise pushed through an IIR pinking filter.  You can switch between those algorithms and see their frequency responses plotted against an ideal 1/f curve.  They all sound pretty much the same, though you may be able to hear subtle differences between them.  See the code for the test page and worklet for details.  
 
-The start page presents just the preferred solution, a white noise worklet with a pinking filter.  It's frequency response is close to ideal.  Since it employs a minimum of JavaScript code it should deliver the best performance.
+The [start page](https://girapet.github.io/noiseworklet) presents just the preferred solution, a white noise worklet with a pinking filter.  It's frequency response is close to ideal.  Since it employs a minimum of JavaScript code it should deliver the best performance.
 
 ### Useful Bits
 * The _addAudioWorkletModule_ function in [index.js](https://github.com/girapet/noiseworklet/blob/master/js/index.js) which lets you load an AudioWorkletProcessor module from a URL that does not return the necessary text/javascript MIME type.
