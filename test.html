@@ -3,10 +3,16 @@
 <html>
 <head>
   <link rel="stylesheet" href="css/index.css">
-  <title>Preferred Pink Noise Generator</title>
+  <title>Pink Noise Testing</title>
 </head>
 <body>
   <div>
+    Type <select id="type">
+      <option value="Baker">Pink - Baker</option>
+      <option value="Trammell">Pink - Trammell</option>
+      <option value="Kellet">Pink - Kellet</option>
+      <option value="IIR">White -> IIR Pinking Filter</option>
+    </select>
     <button type="button" id="start">Start</button>
     <button type="button" id="stop">Stop</button>
   </div>
@@ -15,10 +21,10 @@
   </div>
   <div>
     <input type="checkbox" id="averaging"></input> <label for="averaing">Averaging</label><br/><br/>
-    <a href="test.html">Tests &gt;&gt;</a>
+    <a href="index.html">&lt;&lt; Preferred</a>
   </div>
 </body>
 
 <script type="module" src="js/frequency-visualizer.js"></script>
-<script type="module" src="js/index.js"></script>
+<script type="module" src="js/test.js"></script>
 </html>

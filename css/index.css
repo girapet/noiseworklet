@@ -11,6 +11,11 @@ select {
   margin-right: 10px;
 }
 
+a, a:visited {
+  text-decoration: none;
+  color: Navy;
+}
+
 #visualizer {
   margin-top: 6px;
   margin-bottom: 6px;
